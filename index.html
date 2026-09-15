@@ -85,13 +85,18 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold); outline-o
 .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
 @media (max-width:600px){.grid2,.grid3{grid-template-columns:1fr;}}
 
-table.rep{width:100%; border-collapse:collapse; margin-bottom:6px;}
+table.rep{width:100%; border-collapse:collapse; margin-bottom:0;}
 table.rep th{
   background:#fbf8ee; color:var(--navy); font-size:11.5px; text-transform:uppercase;
   padding:7px 6px; text-align:left; letter-spacing:0.3px; border-bottom:1.5px solid var(--gold);
 }
 table.rep td{padding:5px 5px; border-bottom:1px solid var(--line); vertical-align:top;}
-table.rep input, table.rep select{padding:6px 7px; font-size:13.5px;}
+table.rep input, table.rep select{padding:6px 7px; font-size:13.5px; min-width:56px;}
+.table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:6px;}
+@media (max-width:700px){
+  .table-scroll table.rep{width:auto; min-width:640px;}
+  .table-scroll table.rep input, .table-scroll table.rep select{min-width:78px;}
+}
 .row-actions{margin:6px 0 20px;}
 .btn-add{
   background:none;border:1px dashed var(--navy); color:var(--navy); padding:6px 12px;
@@ -253,10 +258,17 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
         <div class="field"><label>Alternate Mobile</label><input type="tel" name="phoneMobile"></div>
       </div>
       <div class="field"><label class="required">Permanent Address</label><textarea name="permanentAddress" required></textarea></div>
+
+      <div class="grid3">
+        <div class="field"><label class="required">Date of Birth</label><input type="date" name="dob" id="dobInput" required></div>
+        <div class="field"><label>Age <span class="opt">(auto-calculated)</span></label><input type="number" name="age" id="ageInput" min="0" readonly style="background:#f0ede3; color:#555;"></div>
+        <div class="field"><label>Place of Birth</label><input type="text" name="placeOfBirth"></div>
+      </div>
+
       <div class="field"><label class="required">Email</label><input type="email" name="email" required></div>
 
       <div class="grid2">
-        <div class="field"><label class="required">Emergency Contact Person — Relation &amp; Name</label><input type="text" name="emergencyContactName" required></div>
+        <div class="field"><label class="required">Emergency Contact Person</label><input type="text" name="emergencyContactName" required></div>
         <div class="field"><label class="required">Emergency Contact — Mobile Number</label><input type="tel" name="emergencyContactMobile" required></div>
       </div>
 
@@ -267,7 +279,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       </div>
 
       <div class="field">
-        <label>Places resided for more than one year during the last 5 years</label>
+        <label>Residence History <span class="opt">(places resided for more than one year during the last 5 years)</span></label>
         <table class="rep" id="residenceTable">
           <thead><tr><th style="width:11%">From</th><th style="width:11%">To</th><th>Address in Full</th><th style="width:15%">Reason for Change</th><th>Referee (Name &amp; Address)</th></tr></thead>
           <tbody></tbody>
@@ -275,17 +287,10 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
         <button type="button" class="btn-add" data-add="residenceTable" data-cols="from,to,address,reason,referee" data-default="5">+ Add row</button>
       </div>
 
-      <div class="grid3">
-        <div class="field"><label class="required">Date of Birth</label><input type="date" name="dob" id="dobInput" required></div>
-        <div class="field"><label>Age <span class="opt">(auto-calculated)</span></label><input type="number" name="age" id="ageInput" min="0" readonly style="background:#f0ede3; color:#555;"></div>
-        <div class="field"><label>Place of Birth</label><input type="text" name="placeOfBirth"></div>
-      </div>
-      <div class="field"><label>Place of Origin</label><input type="text" name="placeOfOrigin"></div>
-
       <div class="field">
         <label>Family Details / Dependents</label>
         <table class="rep" id="familyTable">
-          <thead><tr><th>Relationship</th><th style="width:15%">Age</th><th>Occupation / Reason for Dependency</th></tr></thead>
+          <thead><tr><th>Relationship</th><th style="width:15%">Age</th><th>Occupation</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="familyTable" data-cols="relationship,age,occupation" data-select-cols="relationship" data-col-options='{"relationship":["Father","Mother","Spouse","Son","Daughter","In-Laws","Other"]}' data-default="5">+ Add row</button>
@@ -304,7 +309,6 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
         </table>
         <button type="button" class="btn-add" data-add="orgTable" data-cols="org,nature" data-default="5">+ Add row</button>
       </div>
-      <div class="field"><label>Court Proceedings <span class="opt">(if involved in any, give particulars)</span></label><textarea name="courtProceedings"></textarea></div>
       <div class="grid2">
         <div class="field"><label>Height (Cms)</label><input type="number" name="height"></div>
         <div class="field"><label>Weight (Kgs)</label><input type="number" name="weight"></div>
@@ -313,6 +317,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
         <div class="field"><label>Last Prolonged / Serious Illness <span class="opt">(if any)</span></label><input type="text" name="illness"></div>
         <div class="field"><label>Physical Disability <span class="opt">(if any)</span></label><input type="text" name="disability"></div>
       </div>
+      <div class="field"><label>Court Proceedings <span class="opt">(if involved in any, give particulars)</span></label><textarea name="courtProceedings"></textarea></div>
     </section>
 
     <!-- SECTION 3: Qualifications -->

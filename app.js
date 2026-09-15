@@ -34,6 +34,16 @@ async function fetchClientIP(){
 }
 fetchClientIP().then(ip => { clientIP = ip; });
 
+// ---------- Wrap repeating-row tables so narrow columns (From/To, Entering/Leaving, etc.)
+// stay horizontally scrollable and legible on mobile instead of being squeezed illegibly ----------
+document.querySelectorAll('table.rep').forEach(t => {
+  if (t.parentElement && t.parentElement.classList.contains('table-scroll')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'table-scroll';
+  t.parentNode.insertBefore(wrap, t);
+  wrap.appendChild(t);
+});
+
 // ---------- Progress nav ----------
 const track = document.getElementById('progressTrack');
 STEPS.forEach((label, i) => {
@@ -687,12 +697,11 @@ function generatePdf(data){
     ['Present Address', data.presentAddress],
     ['Mobile / Alternate Mobile', [data.phoneResidence, data.phoneMobile].filter(Boolean).join(' / ')],
     ['Permanent Address', data.permanentAddress],
+    ['Date of Birth', pdfFormatDate(data.dob)], ['Age', data.age], ['Place of Birth', data.placeOfBirth],
     ['Email', data.email],
-    ['Emergency Contact - Relation & Name', data.emergencyContactName],
+    ['Emergency Contact Person', data.emergencyContactName],
     ['Emergency Contact - Mobile Number', data.emergencyContactMobile],
-    ["Mother's Name", data.motherName], ["Father's Name", data.fatherName], ["Spouse's Name", data.spouseName],
-    ['Date of Birth', pdfFormatDate(data.dob)], ['Age', data.age],
-    ['Place of Birth / Origin', [data.placeOfBirth, data.placeOfOrigin].filter(Boolean).join(' / ')]
+    ["Mother's Name", data.motherName], ["Father's Name", data.fatherName], ["Spouse's Name", data.spouseName]
   ], 76);
 
   const residenceRows = (data.residenceTable || []).slice();
@@ -705,16 +714,16 @@ function generatePdf(data){
       {key:'reason', label:'Reason'}, {key:'referee', label:'Referee'}
     ] },
     { title: 'Family Details / Dependents', rows: familyRows, columns: [
-      {key:'relationship', label:'Relationship'}, {key:'age', label:'Age'}, {key:'occupation', label:'Occupation / Reason for Dependency'}
+      {key:'relationship', label:'Relationship'}, {key:'age', label:'Age'}, {key:'occupation', label:'Occupation'}
     ] }
   ]);
 
   // ---------- Other Particulars ----------
   y = pdfFieldGrid(doc, y, [
     ['Other Income Source / Amount', data.otherIncome],
-    ['Court Proceedings', data.courtProceedings],
     ['Height / Weight', [data.height ? data.height + ' cms' : '', data.weight ? data.weight + ' kgs' : ''].filter(Boolean).join(' / ')],
-    ['Illness / Disability', [data.illness, data.disability].filter(Boolean).join(' / ')]
+    ['Illness / Disability', [data.illness, data.disability].filter(Boolean).join(' / ')],
+    ['Court Proceedings', data.courtProceedings]
   ]);
   const orgRows = (data.orgTable || []).slice();
   while (orgRows.length < 5) orgRows.push({});
@@ -974,9 +983,9 @@ function generateBlankPdfTemplate(){
   y = pdfSectionTitle(doc, 'Personal Particulars', y);
   y = pdfTemplateFieldGrid(doc, y, [
     'Full Name (Surname, First, Middle)', 'Present Address', 'Mobile / Alternate Mobile',
-    'Permanent Address', 'Email', 'Emergency Contact - Relation & Name', 'Emergency Contact - Mobile Number',
-    "Mother's Name", "Father's Name", "Spouse's Name",
-    'Date of Birth', 'Age', 'Place of Birth / Origin'
+    'Permanent Address', 'Date of Birth', 'Age', 'Place of Birth', 'Email',
+    'Emergency Contact Person', 'Emergency Contact - Mobile Number',
+    "Mother's Name", "Father's Name", "Spouse's Name"
   ], 76, ['Present Address', 'Permanent Address']);
   const residenceBlankRows = Array.from({ length: 5 }, () => ({}));
   const familyBlankRows = Array.from({ length: 5 }, () => ({}));
@@ -986,13 +995,13 @@ function generateBlankPdfTemplate(){
       {key:'reason', label:'Reason'}, {key:'referee', label:'Referee'}
     ] },
     { title: 'Family Details / Dependents', rows: familyBlankRows, columns: [
-      {key:'relationship', label:'Relationship'}, {key:'age', label:'Age'}, {key:'occupation', label:'Occupation / Reason for Dependency'}
+      {key:'relationship', label:'Relationship'}, {key:'age', label:'Age'}, {key:'occupation', label:'Occupation'}
     ] }
   ]);
 
   // ---------- Other Particulars ----------
   y = pdfTemplateFieldGrid(doc, y, [
-    'Other Income Source / Amount', 'Court Proceedings', 'Height / Weight', 'Illness / Disability'
+    'Other Income Source / Amount', 'Height / Weight', 'Illness / Disability', 'Court Proceedings'
   ]);
   const orgBlankRows = Array.from({ length: 5 }, () => ({}));
   y = pdfFillRemainingHeight(doc, y, [
