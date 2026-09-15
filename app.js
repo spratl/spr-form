@@ -461,7 +461,8 @@ function pdfDataTable(doc, y, title, rows, columns, minBlankRows, rowHeight, col
     styles: { font: pdfFontFamily, fontSize: 8.5, cellPadding: 2.6, textColor: [30,30,30], lineColor: [205,200,188], lineWidth: 0.2, overflow: 'linebreak', valign: 'top', minCellHeight: rowHeight || 7 },
     headStyles: { fillColor: [251,248,238], textColor: [26,39,68], fontStyle: 'bold', fontSize: 8, lineColor: [205,200,188], lineWidth: 0.3, minCellHeight: 8 },
     columnStyles: columnStyles || {},
-    tableWidth: PDF_CONTENT_W
+    tableWidth: PDF_CONTENT_W,
+    pageBreak: 'avoid'
   });
   return doc.lastAutoTable.finalY + 7;
 }
@@ -481,7 +482,8 @@ function pdfDataTableFixedRowHeight(doc, y, title, rows, columns, rowHeight, col
     styles: { font: pdfFontFamily, fontSize: 8.5, cellPadding: 2.6, textColor: [30,30,30], lineColor: [205,200,188], lineWidth: 0.2, overflow: 'linebreak', valign: 'top', minCellHeight: rowHeight },
     headStyles: { fillColor: [251,248,238], textColor: [26,39,68], fontStyle: 'bold', fontSize: 8, lineColor: [205,200,188], lineWidth: 0.3, minCellHeight: 8 },
     columnStyles: columnStyles || {},
-    tableWidth: PDF_CONTENT_W
+    tableWidth: PDF_CONTENT_W,
+    pageBreak: 'avoid'
   });
   return doc.lastAutoTable.finalY + 7;
 }
@@ -499,6 +501,28 @@ function pdfFillRemainingHeight(doc, y, tableSpecs){
   const rowHeight = Math.max(7, available / Math.max(totalRows, 1));
   tableSpecs.forEach(t => { y = pdfDataTableFixedRowHeight(doc, y, t.title, t.rows, t.columns, rowHeight, t.columnStyles); });
   return y;
+}
+
+// Dry-runs a sequence of drawing calls on a disposable scratch document — same page size and
+// same embedded font as the real one, so text wrapping/heights measure identically — purely to
+// find out how much vertical space it would take, without drawing anything on the real page.
+// Used to decide, before committing to it, whether a page's full content will actually fit.
+// Returns Infinity if the content needed more than one page even during measurement, since that's
+// an unambiguous "doesn't fit" regardless of the raw height delta on whichever page it ended on.
+function pdfMeasureHeight(startY, drawFn){
+  const { jsPDF } = window.jspdf;
+  const scratch = new jsPDF({ unit: 'mm', format: 'a4' });
+  if (pdfFontFamily === 'Montserrat' && typeof MONTSERRAT_REGULAR_B64 !== 'undefined'){
+    try {
+      scratch.addFileToVFS('Montserrat-Regular.ttf', MONTSERRAT_REGULAR_B64);
+      scratch.addFont('Montserrat-Regular.ttf', 'Montserrat', 'normal');
+      scratch.addFileToVFS('Montserrat-Bold.ttf', MONTSERRAT_BOLD_B64);
+      scratch.addFont('Montserrat-Bold.ttf', 'Montserrat', 'bold');
+    } catch(e){ /* falls back to whatever pdfFontFamily already is */ }
+  }
+  const endY = drawFn(scratch, startY);
+  if (scratch.internal.getNumberOfPages() > 1) return Infinity;
+  return endY - startY;
 }
 
 // Template variant: always shows every label with a blank writable cell (never filters empty values)
@@ -702,24 +726,37 @@ function generatePdf(data){
 
   // ---------- Qualifications (always starts on its own fresh page) ----------
   doc.addPage(); y = 20;
-  y = pdfDataTable(doc, y, 'Educational History', data.eduTable, [
-    {key:'institution', label:'Institution'}, {key:'university', label:'University'}, {key:'entering', label:'Entering'},
-    {key:'leaving', label:'Leaving'}, {key:'degree', label:'Degree/Exam'}, {key:'subjects', label:'Subjects'}, {key:'marks', label:'Marks %'}
-  ], 6, 10.5, {
-    0: { cellWidth: 33 }, 1: { cellWidth: 31 }, 2: { cellWidth: 18 }, 3: { cellWidth: 18 },
-    4: { cellWidth: 30 }, 5: { cellWidth: 36 }, 6: { cellWidth: 14 }
-  });
-  y = pdfFieldGrid(doc, y, [
-    ['Professional Societies', data.profSocieties],
-    ['Honours / Scholarships', data.honours],
-    ['Publications / Paper / Thesis', data.publications]
-  ]);
-  y = pdfDataTable(doc, y, 'Training Attended', data.trainingTable, [
-    {key:'name', label:'Training'}, {key:'duration', label:'Duration'}, {key:'faculty', label:'Faculty'}, {key:'content', label:'Content'}
-  ], 2);
-  y = pdfDataTable(doc, y, 'Languages Known', data.langTable, [
-    {key:'language', label:'Language'}, {key:'speak', label:'Speak'}, {key:'read', label:'Read'}, {key:'write', label:'Write'}
-  ], 3);
+  // Educational History can be shown in two sizes: the roomier default (6 rows minimum, 1.5x row
+  // height) the client asked for, or a compact fallback (just the rows actually filled in, at
+  // standard height) for when a candidate has enough real content elsewhere on this page that the
+  // roomier version would push things onto an unwanted extra page. We measure both against a
+  // disposable scratch copy of this exact page's content before drawing anything for real, so the
+  // decision is based on the true rendered height (font, wrapping, everything) rather than a guess.
+  function drawQualificationsPage(targetDoc, startY, eduMinRows, eduRowHeight){
+    let cy = pdfDataTable(targetDoc, startY, 'Educational History', data.eduTable, [
+      {key:'institution', label:'Institution'}, {key:'university', label:'University'}, {key:'entering', label:'Entering'},
+      {key:'leaving', label:'Leaving'}, {key:'degree', label:'Degree/Exam'}, {key:'subjects', label:'Subjects'}, {key:'marks', label:'Marks %'}
+    ], eduMinRows, eduRowHeight, {
+      0: { cellWidth: 33 }, 1: { cellWidth: 31 }, 2: { cellWidth: 18 }, 3: { cellWidth: 18 },
+      4: { cellWidth: 30 }, 5: { cellWidth: 36 }, 6: { cellWidth: 14 }
+    });
+    cy = pdfFieldGrid(targetDoc, cy, [
+      ['Professional Societies', data.profSocieties],
+      ['Honours / Scholarships', data.honours],
+      ['Publications / Paper / Thesis', data.publications]
+    ]);
+    cy = pdfDataTable(targetDoc, cy, 'Training Attended', data.trainingTable, [
+      {key:'name', label:'Training'}, {key:'duration', label:'Duration'}, {key:'faculty', label:'Faculty'}, {key:'content', label:'Content'}
+    ], 2);
+    cy = pdfDataTable(targetDoc, cy, 'Languages Known', data.langTable, [
+      {key:'language', label:'Language'}, {key:'speak', label:'Speak'}, {key:'read', label:'Read'}, {key:'write', label:'Write'}
+    ], 3);
+    return cy;
+  }
+  const qualificationsPageLimit = 260; // 280 bottom margin - 20 start-of-page y, matches the rest of this doc
+  const fullHeight = pdfMeasureHeight(y, (d, sy) => drawQualificationsPage(d, sy, 6, 10.5));
+  const useCompactEdu = fullHeight > qualificationsPageLimit;
+  y = drawQualificationsPage(doc, y, useCompactEdu ? 2 : 6, useCompactEdu ? 7 : 10.5);
 
   // ---------- Experience (always starts on its own fresh page) ----------
   doc.addPage(); y = 20;
