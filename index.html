@@ -97,6 +97,28 @@ table.rep input, table.rep select{padding:6px 7px; font-size:13.5px; min-width:5
   .table-scroll table.rep{width:auto; min-width:640px;}
   .table-scroll table.rep input, .table-scroll table.rep select{min-width:78px;}
 }
+
+/* Mobile: focused table field pops into a docked, full-width editing bar so
+   typed text in narrow From/To-style columns is fully visible while typing.
+   Desktop/tablet are unaffected — the bar is only ever populated on phone widths. */
+#mobileFieldBar{
+  position:fixed; left:10px; right:10px; top:10px; z-index:9999;
+  background:#fff; border:1px solid var(--gold); border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2); padding:8px 10px 10px;
+  display:none;
+}
+#mobileFieldBar.open{ display:block; }
+#mobileFieldBar .mfb-label{
+  font-size:11px; text-transform:uppercase; letter-spacing:0.3px;
+  color:var(--navy); font-weight:600; margin-bottom:5px;
+}
+#mobileFieldBar input, #mobileFieldBar select{
+  width:100%; font-size:16px; padding:8px 9px; box-sizing:border-box; min-width:0;
+}
+.mfb-placeholder{
+  display:inline-block; min-height:20px; width:100%; box-sizing:border-box;
+  color:#9a978c; font-size:12px; font-style:italic; padding:6px 7px;
+}
 .row-actions{margin:6px 0 20px;}
 .btn-add{
   background:none;border:1px dashed var(--navy); color:var(--navy); padding:6px 12px;

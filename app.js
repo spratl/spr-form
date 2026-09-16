@@ -44,6 +44,86 @@ document.querySelectorAll('table.rep').forEach(t => {
   wrap.appendChild(t);
 });
 
+// ---------- Mobile: pop the focused table field into a docked, full-width editing bar ----------
+// Fixes narrow From/To-style columns (Residence History, Educational History, Past Employment,
+// and every other data table) hiding typed text on phones. The bar mirrors the real input node
+// itself (no value copying/syncing needed) and snaps it back to its original cell the moment
+// focus moves anywhere else.
+(function () {
+  const MOBILE_QUERY = '(max-width: 700px)';
+  function isMobileWidth() {
+    return window.matchMedia ? window.matchMedia(MOBILE_QUERY).matches : window.innerWidth <= 700;
+  }
+
+  const bar = document.createElement('div');
+  bar.id = 'mobileFieldBar';
+  const labelEl = document.createElement('div');
+  labelEl.className = 'mfb-label';
+  bar.appendChild(labelEl);
+  document.body.appendChild(bar);
+
+  let active = null; // { input, originalParent, originalNext, placeholder }
+
+  function columnLabelFor(input) {
+    const td = input.closest('td');
+    const tr = td && td.closest('tr');
+    const table = td && td.closest('table');
+    if (!td || !tr || !table) return '';
+    const idx = Array.prototype.indexOf.call(tr.children, td);
+    const headRow = table.querySelector('thead tr');
+    const th = headRow && headRow.children[idx];
+    return th ? th.textContent.trim() : '';
+  }
+
+  function restoreActive() {
+    if (!active) return;
+    const { input, originalParent, originalNext, placeholder } = active;
+    originalParent.insertBefore(input, originalNext);
+    if (placeholder && placeholder.parentNode) placeholder.remove();
+    bar.classList.remove('open');
+    active = null;
+  }
+
+  document.addEventListener('focusin', (e) => {
+    const input = e.target;
+
+    // Any new focus target (even one we don't care about) means the previously
+    // expanded field is done being edited — restore it first.
+    if (active && input !== active.input) restoreActive();
+
+    if (!isMobileWidth()) return;
+    if (!(input.matches && input.matches('input, select') && input.closest('table.rep'))) return;
+    if (active && active.input === input) return;
+
+    const originalParent = input.parentNode;
+    const originalNext = input.nextSibling;
+    const placeholder = document.createElement('span');
+    placeholder.className = 'mfb-placeholder';
+    placeholder.textContent = 'Editing…';
+    originalParent.insertBefore(placeholder, input);
+
+    active = { input, originalParent, originalNext, placeholder };
+    labelEl.textContent = columnLabelFor(input);
+    bar.appendChild(input);
+    bar.classList.add('open');
+    // Reparenting a connected, focused element preserves focus in modern browsers;
+    // this call is just a safety net for engines that drop it.
+    if (document.activeElement !== input) input.focus();
+  });
+
+  // Fallback for "tapped away to nowhere" (keyboard dismissed, blank area tapped) —
+  // the case above (a new element gaining focus) won't fire, so catch it on blur instead.
+  document.addEventListener('focusout', (e) => {
+    if (!active || e.target !== active.input) return;
+    const closingInput = e.target;
+    setTimeout(() => {
+      if (!active || active.input !== closingInput) return; // already restored via focusin
+      if (document.activeElement === closingInput) return; // engine kept focus after all
+      restoreActive();
+    }, 0);
+  });
+})();
+
 // ---------- Progress nav ----------
 const track = document.getElementById('progressTrack');
 STEPS.forEach((label, i) => {
