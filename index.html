@@ -99,21 +99,27 @@ table.rep input, table.rep select{padding:6px 7px; font-size:13.5px; min-width:0
    content — that auto-sizing was what let one column balloon and push the rest off-screen. */
 @media (max-width:700px){
   .table-scroll table.rep{width:auto;}
-  /* Per-table minimum width, sized to the column count so a 2-3 column table isn't forced into
-     the same wide scroll area as a 6-7 column one. Percent widths on the <th>s below then divide
-     this up so the first 2-3 columns stay a legible, non-dominant size and the tail of the row
-     peeks at the screen edge as a natural cue to scroll for the remaining columns. */
-  #residenceTable{min-width:560px;}
-  #familyTable{min-width:400px;}
-  #orgTable{min-width:380px;}
-  #eduTable{min-width:680px;}
-  #trainingTable{min-width:460px;}
-  #langTable{min-width:420px;}
-  #empTable{min-width:600px;}
-  #respTable{min-width:380px;}
-  #empRefTable{min-width:520px;}
-  #refTable{min-width:420px;}
-  #localTable{min-width:420px;}
+  /* Percentage column widths only resolve correctly under table-layout:fixed when the table
+     itself has a definite width — with width left as "auto" (even sized via min-width), browsers
+     have no basis to resolve the percentages against and fall back to an unpredictable,
+     content-based split (this was the direct cause of "To" rendering narrower than "From" even
+     though both were set to the same 12%). Giving each table an explicit px width (not just a
+     min-width) fixes that: the percentages below now resolve exactly as specified. Sized to the
+     column count so a 2-3 column table isn't forced into the same wide scroll area as a 6-7
+     column one; the first 2-3 columns stay a legible, non-dominant size and the tail of the row
+     peeks at the screen edge as a natural cue to scroll for the remaining columns.
+  */
+  #residenceTable{width:580px;}
+  #familyTable{width:400px;}
+  #orgTable{width:380px;}
+  #eduTable{width:680px;}
+  #trainingTable{width:460px;}
+  #langTable{width:420px;}
+  #empTable{width:600px;}
+  #respTable{width:380px;}
+  #empRefTable{width:520px;}
+  #refTable{width:420px;}
+  #localTable{width:420px;}
 }
 
 /* Mobile: focused table field pops into a docked, full-width editing bar so
@@ -321,7 +327,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Residence History <span class="opt">(places resided for more than one year during the last 5 years)</span></label>
         <table class="rep" id="residenceTable">
-          <thead><tr><th style="width:12%">From</th><th style="width:12%">To</th><th style="width:28%">Address in Full</th><th style="width:16%">Reason for Change</th><th style="width:32%">Referee (Name &amp; Address)</th></tr></thead>
+          <thead><tr><th style="width:14%">From</th><th style="width:14%">To</th><th style="width:26%">Address in Full</th><th style="width:15%">Reason for Change</th><th style="width:31%">Referee (Name &amp; Address)</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="residenceTable" data-cols="from,to,address,reason,referee" data-default="5">+ Add row</button>
@@ -408,7 +414,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Past Employment <span class="opt">(reverse chronological order; first row = present employer)</span></label>
         <table class="rep" id="empTable">
-          <thead><tr><th style="width:26%">Employer Name &amp; Address</th><th style="width:12%">From</th><th style="width:12%">To</th><th style="width:16%">Basic Salary</th><th style="width:16%">Total Salary</th><th style="width:18%">Reason for Leaving</th></tr></thead>
+          <thead><tr><th style="width:20%">Employer Name &amp; Location</th><th style="width:15%">From</th><th style="width:15%">To</th><th style="width:16%">Basic Salary</th><th style="width:16%">Total Salary</th><th style="width:18%">Reason for Leaving</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="empTable" data-cols="employer,from,to,basic,total,reason" data-default="6" data-required-rows="1">+ Add row</button>
