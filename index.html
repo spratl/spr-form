@@ -85,17 +85,35 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--gold); outline-o
 .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
 @media (max-width:600px){.grid2,.grid3{grid-template-columns:1fr;}}
 
-table.rep{width:100%; border-collapse:collapse; margin-bottom:0;}
+table.rep{width:100%; border-collapse:collapse; margin-bottom:0; table-layout:fixed;}
 table.rep th{
   background:#fbf8ee; color:var(--navy); font-size:11.5px; text-transform:uppercase;
   padding:7px 6px; text-align:left; letter-spacing:0.3px; border-bottom:1.5px solid var(--gold);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-table.rep td{padding:5px 5px; border-bottom:1px solid var(--line); vertical-align:top;}
-table.rep input, table.rep select{padding:6px 7px; font-size:13.5px; min-width:56px;}
+table.rep td{padding:5px 5px; border-bottom:1px solid var(--line); vertical-align:top; overflow:hidden;}
+table.rep input, table.rep select{padding:6px 7px; font-size:13.5px; min-width:0; width:100%; box-sizing:border-box;}
 .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:6px;}
+/* table-layout:fixed makes every column obey the % width set on its <th> (see per-table
+   widths below) instead of the browser auto-sizing whichever column has the least-constrained
+   content — that auto-sizing was what let one column balloon and push the rest off-screen. */
 @media (max-width:700px){
-  .table-scroll table.rep{width:auto; min-width:640px;}
-  .table-scroll table.rep input, .table-scroll table.rep select{min-width:78px;}
+  .table-scroll table.rep{width:auto;}
+  /* Per-table minimum width, sized to the column count so a 2-3 column table isn't forced into
+     the same wide scroll area as a 6-7 column one. Percent widths on the <th>s below then divide
+     this up so the first 2-3 columns stay a legible, non-dominant size and the tail of the row
+     peeks at the screen edge as a natural cue to scroll for the remaining columns. */
+  #residenceTable{min-width:560px;}
+  #familyTable{min-width:400px;}
+  #orgTable{min-width:380px;}
+  #eduTable{min-width:680px;}
+  #trainingTable{min-width:460px;}
+  #langTable{min-width:420px;}
+  #empTable{min-width:600px;}
+  #respTable{min-width:380px;}
+  #empRefTable{min-width:520px;}
+  #refTable{min-width:420px;}
+  #localTable{min-width:420px;}
 }
 
 /* Mobile: focused table field pops into a docked, full-width editing bar so
@@ -303,7 +321,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Residence History <span class="opt">(places resided for more than one year during the last 5 years)</span></label>
         <table class="rep" id="residenceTable">
-          <thead><tr><th style="width:11%">From</th><th style="width:11%">To</th><th>Address in Full</th><th style="width:15%">Reason for Change</th><th>Referee (Name &amp; Address)</th></tr></thead>
+          <thead><tr><th style="width:12%">From</th><th style="width:12%">To</th><th style="width:28%">Address in Full</th><th style="width:16%">Reason for Change</th><th style="width:32%">Referee (Name &amp; Address)</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="residenceTable" data-cols="from,to,address,reason,referee" data-default="5">+ Add row</button>
@@ -312,7 +330,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Family Details / Dependents</label>
         <table class="rep" id="familyTable">
-          <thead><tr><th>Relationship</th><th style="width:15%">Age</th><th>Occupation</th></tr></thead>
+          <thead><tr><th style="width:30%">Relationship</th><th style="width:15%">Age</th><th style="width:55%">Occupation</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="familyTable" data-cols="relationship,age,occupation" data-select-cols="relationship" data-col-options='{"relationship":["Father","Mother","Spouse","Son","Daughter","In-Laws","Other"]}' data-default="5">+ Add row</button>
@@ -335,7 +353,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Membership of Social, Religious, Cultural or Political Organisation</label>
         <table class="rep" id="orgTable">
-          <thead><tr><th>Name of Organisation</th><th>Nature of Your Association</th></tr></thead>
+          <thead><tr><th style="width:45%">Name of Organisation</th><th style="width:55%">Nature of Your Association</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="orgTable" data-cols="org,nature" data-default="5">+ Add row</button>
@@ -348,7 +366,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Educational History <span class="opt">(High School onwards — indicate gaps clearly)</span></label>
         <table class="rep" id="eduTable">
-          <thead><tr><th>Institution</th><th>University</th><th style="width:9%">Entering</th><th style="width:9%">Leaving</th><th>Degree / Exam</th><th>Main Subjects</th><th style="width:8%">Marks %</th></tr></thead>
+          <thead><tr><th style="width:20%">Institution</th><th style="width:18%">University</th><th style="width:10%">Entering</th><th style="width:10%">Leaving</th><th style="width:16%">Degree / Exam</th><th style="width:16%">Main Subjects</th><th style="width:10%">Marks %</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="eduTable" data-cols="institution,university,entering,leaving,degree,subjects,marks" data-default="6" data-required-rows="2">+ Add row</button>
@@ -361,7 +379,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Training Attended <span class="opt">(if any)</span></label>
         <table class="rep" id="trainingTable">
-          <thead><tr><th>Name of Training</th><th style="width:14%">Duration</th><th>Faculty / Institute</th><th>Brief Content</th></tr></thead>
+          <thead><tr><th style="width:28%">Name of Training</th><th style="width:16%">Duration</th><th style="width:26%">Faculty / Institute</th><th style="width:30%">Brief Content</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="trainingTable" data-cols="name,duration,faculty,content" data-default="2">+ Add row</button>
@@ -369,7 +387,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Languages Known</label>
         <table class="rep" id="langTable">
-          <thead><tr><th>Language</th><th>Speak</th><th>Read</th><th>Write</th></tr></thead>
+          <thead><tr><th style="width:28%">Language</th><th style="width:24%">Speak</th><th style="width:24%">Read</th><th style="width:24%">Write</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="langTable" data-cols="language,speak,read,write" data-select-cols="speak,read,write" data-default="3">+ Add row</button>
@@ -390,7 +408,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Past Employment <span class="opt">(reverse chronological order; first row = present employer)</span></label>
         <table class="rep" id="empTable">
-          <thead><tr><th>Employer Name &amp; Address</th><th style="width:8%">From</th><th style="width:8%">To</th><th style="width:9%">Basic Salary</th><th style="width:9%">Total Salary</th><th>Reason for Leaving</th></tr></thead>
+          <thead><tr><th style="width:26%">Employer Name &amp; Address</th><th style="width:12%">From</th><th style="width:12%">To</th><th style="width:16%">Basic Salary</th><th style="width:16%">Total Salary</th><th style="width:18%">Reason for Leaving</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="empTable" data-cols="employer,from,to,basic,total,reason" data-default="6" data-required-rows="1">+ Add row</button>
@@ -398,7 +416,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Designation / Scope of Responsibilities <span class="opt">(mention special achievements)</span></label>
         <table class="rep" id="respTable">
-          <thead><tr><th>Designation / Responsibilities</th><th>Supervisor's Name / Designation</th></tr></thead>
+          <thead><tr><th style="width:55%">Designation / Responsibilities</th><th style="width:45%">Supervisor's Name / Designation</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="respTable" data-cols="responsibilities,supervisor" data-default="6" data-required-rows="1">+ Add row</button>
@@ -411,7 +429,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Two Employees of Any of Our Units Known to You <span class="opt">(if applicable)</span></label>
         <table class="rep" id="empRefTable">
-          <thead><tr><th>Name</th><th>Rank</th><th>Unit</th><th>Deptt.</th><th>Relationship</th></tr></thead>
+          <thead><tr><th style="width:24%">Name</th><th style="width:16%">Rank</th><th style="width:20%">Unit</th><th style="width:18%">Deptt.</th><th style="width:22%">Relationship</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="empRefTable" data-cols="name,rank,unit,dept,relation" data-default="2" style="display:none;">+ Add row</button>
@@ -419,7 +437,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label class="required">Two Referees Not Related to You <span class="opt">(at least one from your line of occupation / present or past employer)</span></label>
         <table class="rep" id="refTable">
-          <thead><tr><th>Name of Referee</th><th>Occupation</th><th>Address / Phone</th></tr></thead>
+          <thead><tr><th style="width:30%">Name of Referee</th><th style="width:32%">Occupation</th><th style="width:38%">Address / Phone</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="refTable" data-cols="name,occupation,contact" data-default="2" data-required-rows="2" style="display:none;">+ Add row</button>
@@ -427,7 +445,7 @@ footer{text-align:center; font-size:11px; color:#999; padding:20px;}
       <div class="field">
         <label>Two Responsible Persons of Your Locality to Whom You Are Known</label>
         <table class="rep" id="localTable">
-          <thead><tr><th>Name</th><th>Occupation</th><th>Address / Phone</th></tr></thead>
+          <thead><tr><th style="width:30%">Name</th><th style="width:32%">Occupation</th><th style="width:38%">Address / Phone</th></tr></thead>
           <tbody></tbody>
         </table>
         <button type="button" class="btn-add" data-add="localTable" data-cols="name,occupation,contact" data-default="2" style="display:none;">+ Add row</button>

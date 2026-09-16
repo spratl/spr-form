@@ -60,9 +60,66 @@ document.querySelectorAll('table.rep').forEach(t => {
   const labelEl = document.createElement('div');
   labelEl.className = 'mfb-label';
   bar.appendChild(labelEl);
-  document.body.appendChild(bar);
+  // Appended inside #dataForm (not document.body): the bar uses position:fixed so this doesn't
+  // change where it renders, but it keeps the relocated input a descendant of the form the whole
+  // time. That matters because live-caps formatting, draft autosave and mandatory-field checking
+  // are all delegated listeners bound to #dataForm — if the field were moved outside the form
+  // element, its input events would stop bubbling to those listeners while it's docked, which is
+  // why typing in the docked bar wasn't being auto-capitalized.
+  document.getElementById('dataForm').appendChild(bar);
 
   let active = null; // { input, originalParent, originalNext, placeholder }
+
+  // ---- Auto-advance through a repeating table: same row, left to right, then first
+  // column of the next row. Used by both the Enter/Go key (mobile virtual keyboard and
+  // desktop) and by "tapped away to nowhere" on mobile, so the candidate never has to
+  // hunt for a narrow off-screen column to reach the next cell. Skips disabled/readonly
+  // cells. Returns null once the table's last cell is reached, at which point normal
+  // navigation (tapping another field, another section) takes over.
+  function nextRepCell(input) {
+    const td = input.closest('td');
+    const tr = td && td.closest('tr');
+    const table = tr && tr.closest('table.rep');
+    if (!td || !tr || !table) return null;
+    const cellIsUsable = (c) => {
+      const f = c && c.querySelector('input, select');
+      return f && !f.disabled && !f.readOnly ? f : null;
+    };
+    for (let i = Array.prototype.indexOf.call(tr.children, td) + 1; i < tr.children.length; i++) {
+      const f = cellIsUsable(tr.children[i]);
+      if (f) return f;
+    }
+    let nextTr = tr.nextElementSibling;
+    while (nextTr) {
+      for (let i = 0; i < nextTr.children.length; i++) {
+        const f = cellIsUsable(nextTr.children[i]);
+        if (f) return f;
+      }
+      nextTr = nextTr.nextElementSibling;
+    }
+    return null;
+  }
+
+  // While a field is docked in the mobile bar it is physically a child of the bar, not of its
+  // original <td> — so its own position can't be used to find "the next cell" anymore. Its
+  // placeholder span is still sitting in the original cell, so that's the anchor to search from
+  // whenever the field we're navigating from is the currently-docked one.
+  function anchorFor(input) {
+    return (active && active.input === input) ? active.placeholder : input;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const input = e.target;
+    if (!(input.matches && input.matches('input, select'))) return;
+    const isDocked = active && active.input === input;
+    if (!input.closest('table.rep') && !isDocked) return;
+    if (input.tagName === 'SELECT' && !isMobileWidth()) return; // let desktop select keep native Enter behaviour
+    const next = nextRepCell(anchorFor(input));
+    e.preventDefault();
+    if (next) next.focus();
+    else input.blur();
+  });
 
   function columnLabelFor(input) {
     const td = input.closest('td');
@@ -119,7 +176,12 @@ document.querySelectorAll('table.rep').forEach(t => {
     setTimeout(() => {
       if (!active || active.input !== closingInput) return; // already restored via focusin
       if (document.activeElement === closingInput) return; // engine kept focus after all
-      restoreActive();
+      // Ambiguous tap-away (keyboard dismissed, blank space tapped) rather than a deliberate
+      // tap on a different field — chain forward to the next column/row automatically instead
+      // of just closing the bar and leaving the candidate to locate the next cell themselves.
+      const next = nextRepCell(anchorFor(closingInput));
+      if (next) next.focus();
+      else restoreActive();
     }, 0);
   });
 })();
@@ -426,6 +488,12 @@ function restoreDraft(){
           if (inp) inp.value = rowData[col];
         });
       });
+      // A draft only stores rows the candidate had actually typed into (collectFormData skips
+      // blank rows), so restoring exactly those rows can leave far fewer rows on screen than the
+      // table's configured default (e.g. 1 filled row restored where 5/6 blank rows should be
+      // there ready to fill). Top back up to the configured default with additional blank rows.
+      const defaultCount = parseInt(btn.dataset.default || '1', 10);
+      while (tbody.children.length < defaultCount) btn.click();
     });
     // restore dynamically-added remuneration rows (beyond the fixed default boxes)
     ['remMonthlyMoreRows','remAnnualMoreRows','remPerksMoreRows','remCarMoreRows'].forEach(containerId => {
