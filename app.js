@@ -6,7 +6,6 @@ let currentStep = 0;
 let photoDataUrl = null;
 let logoDataUrl = null;
 let logo2DataUrl = null;
-let clientIP = null;
 let pdfFontFamily = 'helvetica';
 let saveTimer;
 
@@ -21,18 +20,6 @@ fetch('logo2.png').then(r => r.blob()).then(blob => {
   reader.onload = () => { logo2DataUrl = reader.result; };
   reader.readAsDataURL(blob);
 }).catch(() => { logo2DataUrl = null; });
-
-// Public IP lookup — a browser has no built-in way to know its own public IP,
-// so we ask a free external service. Best-effort only: if it fails or is blocked
-// (ad-blockers, offline use), the form still works — the PDF just shows "Not available".
-async function fetchClientIP(){
-  try {
-    const res = await fetch('https://api.ipify.org?format=json');
-    const json = await res.json();
-    return json.ip || null;
-  } catch(e){ return null; }
-}
-fetchClientIP().then(ip => { clientIP = ip; });
 
 // ---------- Wrap repeating-row tables so narrow columns (From/To, Entering/Leaving, etc.)
 // stay horizontally scrollable and legible on mobile instead of being squeezed illegibly ----------
@@ -1030,7 +1017,7 @@ function generatePdf(data){
   y = pdfBoxedParagraphMixed(doc, y, 'Consent for Collection and Processing of Personal Data', [
     [
       { text: `I, ${consentFullName}`, bold: true },
-      { text: "consent to SPR Auto Technologies Limited collecting, storing and processing my personal data and information mentioned and submitted in this form including IP Address, Photograph, Compensation details solely for the purpose of evaluation of my candidature for current or future employment opportunities with SPR Auto Technologies Limited or its group companies / subsidiaries and for conducting background verification (where applicable), and sharing relevant details or extracts from this form and my resume with the interview panel. I have provided the information in this form voluntarily and understand that providing incomplete or incorrect data may affect the Company's ability to process my job application and this data will not be shared with third parties except as necessary for the recruitment process or as required by law.", bold: false }
+      { text: "consent to SPR Auto Technologies Limited collecting, storing and processing my personal data and information mentioned and submitted in this form including Photograph, Compensation details solely for the purpose of evaluation of my candidature for current or future employment opportunities with SPR Auto Technologies Limited or its group companies / subsidiaries and for conducting background verification (where applicable), and sharing relevant details or extracts from this form and my resume with the interview panel. I have provided the information in this form voluntarily and understand that providing incomplete or incorrect data may affect the Company's ability to process my job application and this data will not be shared with third parties except as necessary for the recruitment process or as required by law.", bold: false }
     ],
     [
       { text: "I additionally consent to my data being retained beyond this specific hiring process, for consideration against future roles at the Company, for a period not exceeding", bold: false },
@@ -1052,8 +1039,6 @@ function generatePdf(data){
   doc.setFont(pdfFontFamily,'bold'); doc.setFontSize(10);
   doc.text('Date & Time: ' + (data.submissionTimestamp || '-'), PDF_MARGIN, y);
   doc.text('Location: ' + (data.declLocation || '-'), PDF_MARGIN + 95, y);
-  y += 8;
-  doc.text('IP Address: ' + (data.submissionIP || 'Not available'), PDF_MARGIN, y);
   y += 9;
   const sigLines = doc.splitTextToSize('Signature: ' + (data.coverName || '-') + ' (submitted digitally)', PDF_CONTENT_W);
   doc.text(sigLines, PDF_MARGIN, y);
@@ -1232,7 +1217,7 @@ function generateBlankPdfTemplate(){
   y = pdfBoxedParagraphMixed(doc, y, 'Consent for Collection and Processing of Personal Data', [
     [
       { text: 'I, ________________________________', bold: true },
-      { text: "consent to SPR Auto Technologies Limited collecting, storing and processing my personal data and information mentioned and submitted in this form including IP Address, Photograph, Compensation details solely for the purpose of evaluation of my candidature for current or future employment opportunities with SPR Auto Technologies Limited or its group companies / subsidiaries and for conducting background verification (where applicable), and sharing relevant details or extracts from this form and my resume with the interview panel. I have provided the information in this form voluntarily and understand that providing incomplete or incorrect data may affect the Company's ability to process my job application and this data will not be shared with third parties except as necessary for the recruitment process or as required by law.", bold: false }
+      { text: "consent to SPR Auto Technologies Limited collecting, storing and processing my personal data and information mentioned and submitted in this form including Photograph, Compensation details solely for the purpose of evaluation of my candidature for current or future employment opportunities with SPR Auto Technologies Limited or its group companies / subsidiaries and for conducting background verification (where applicable), and sharing relevant details or extracts from this form and my resume with the interview panel. I have provided the information in this form voluntarily and understand that providing incomplete or incorrect data may affect the Company's ability to process my job application and this data will not be shared with third parties except as necessary for the recruitment process or as required by law.", bold: false }
     ],
     [
       { text: "I additionally consent to my data being retained beyond this specific hiring process, for consideration against future roles at the Company, for a period not exceeding", bold: false },
@@ -1564,8 +1549,6 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   const submitBtn = document.getElementById('submitBtn');
   const originalLabel = submitBtn.textContent;
   submitBtn.disabled = true; submitBtn.textContent = 'Preparing…';
-  if (!clientIP) { clientIP = await fetchClientIP(); }
-  data.submissionIP = clientIP;
   submitBtn.disabled = false; submitBtn.textContent = originalLabel;
 
   try {
