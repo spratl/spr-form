@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spr-form-cache-v10';
+const CACHE_NAME = 'spr-form-cache-v11';
 const ASSETS = [
   './',
   './index.html',
